@@ -17,12 +17,12 @@ The following table shows the compatibility matrix for different PostgreSQL vers
 
 | Platform | Architecture | PostgreSQL 14 | PostgreSQL 15 | PostgreSQL 16 | PostgreSQL 17 |
 |----------|-------------|:-------------:|:-------------:|:-------------:|:-------------:|
-| Ubuntu Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
-| Ubuntu 24.04 | x86_64 | ✅ | ✅ | ✅ | ✅ |
-| Windows Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
-| Windows 2019 | x86_64 | ✅ | ✅ | ✅ | ✅ |
-| macOS Latest | arm64 | ✅ | ✅ | ✅ | ✅ |
-| macOS 13 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| ubuntu-latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| ubuntu-24.04 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| windows-latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| windows-2019 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| macos-latest | arm64 | ✅ | ✅ | ✅ | ✅ |
+| macos-13 | x86_64 | ✅ | ✅ | ✅ | ✅ |
 
 ## Quick Start
 

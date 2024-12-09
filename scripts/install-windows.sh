@@ -83,17 +83,23 @@ fi
 export PATH="/mingw64/bin:$PATH"
 export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-# Build and install pgvector
-git clone --branch "v$PGVECTOR_VERSION" https://github.com/pgvector/pgvector.git
+# Install pgvector
+echo "Building pgvector from source..."
+pacman -S --noconfirm git make gcc
+
+# Create and use temporary directory
+TEMP_DIR=$(mktemp -d)
+ORIG_DIR=$(pwd)
+cd "$TEMP_DIR"
+git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
 make clean
-PG_CONFIG=/mingw64/bin/pg_config make
-PG_CONFIG=/mingw64/bin/pg_config make install
-cd ..
-rm -rf pgvector
+PATH=$PATH:/mingw64/bin make USE_PGXS=1
+PATH=$PATH:/mingw64/bin make USE_PGXS=1 install
+cd "$ORIG_DIR"
+rm -rf "$TEMP_DIR"
 
-# Create and configure pgvector extension
-echo "Creating pgvector extension..."
+# Create extension
 PGPASSWORD=$PGPASSWORD psql -h localhost -U $PGUSER -d $PGDATABASE -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Verify installation
