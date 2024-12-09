@@ -30,5 +30,6 @@ runs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        chmod +x ${{ github.action_path }}/scripts/install-windows.sh
-        ${{ github.action_path }}/scripts/install-windows.sh ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
+        SCRIPT_PATH=$(echo "${{ github.action_path }}/scripts/install-windows.sh" | sed 's/\\/\//g')
+        chmod +x "$SCRIPT_PATH"
+        "$SCRIPT_PATH" ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
