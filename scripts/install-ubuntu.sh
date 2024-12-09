@@ -15,6 +15,9 @@ sudo pg_dropcluster --stop ${PG_VERSION} main || true
 sudo pg_createcluster ${PG_VERSION} main --start || true
 sudo systemctl start postgresql
 
+# Create runner user and grant permissions
+sudo -u postgres psql -c "CREATE USER runner WITH SUPERUSER;"
+
 # Verify PostgreSQL installation
 sudo -u postgres psql -c "SELECT version();"
 
@@ -33,5 +36,6 @@ fi
 
 # Configure PostgreSQL authentication for CI
 echo "local all postgres trust" | sudo tee /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
+echo "local all runner trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
 echo "local all all trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
 sudo systemctl restart postgresql
