@@ -31,50 +31,15 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install PostgreSQL (macOS)
-      if: startsWith(matrix.os, 'macos-')
-      run: |
-        brew install postgresql@${{ matrix.postgres-version }}
-        brew link postgresql@${{ matrix.postgres-version }}
-        echo "/usr/local/opt/postgresql@${{ matrix.postgres-version }}/bin" >> $GITHUB_PATH
     
     - name: Setup pgvector
       uses: ./
       with:
         postgres-version: ${{ matrix.postgres-version }}
-    
-    - name: Start PostgreSQL (Ubuntu)
-      if: startsWith(matrix.os, 'ubuntu-')
-      run: |
-        sudo systemctl start postgresql.service
         
-    - name: Start PostgreSQL (macOS)
-      if: startsWith(matrix.os, 'macos-')
+    - name: Test Extension
       run: |
-        brew services start postgresql@${{ matrix.postgres-version }}
-        sleep 3 # wait for PostgreSQL to start
-        
-    - name: Test Extension (Ubuntu)
-      if: startsWith(matrix.os, 'ubuntu-')
-      run: |
-        sudo -u postgres psql -c 'CREATE EXTENSION vector;'
-        sudo -u postgres psql -c 'SELECT vector_version();'
-        
-    - name: Test Extension (macOS)
-      if: startsWith(matrix.os, 'macos-')
-      run: |
-        createdb $USER
-        psql $USER -c 'CREATE EXTENSION vector;'
-        psql $USER -c '\dx'
-        psql $USER -c 'SELECT * FROM pg_available_extensions WHERE name = '\''vector'\'';'
-        psql $USER -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
-        psql $USER -c 'INSERT INTO items (embedding) VALUES ('\''[1,2,3]'\'');'
-        psql $USER -c 'SELECT * FROM items;'
-        
-    - name: Test Extension (Windows)
-      if: startsWith(matrix.os, 'windows-')
-      shell: cmd
-      run: |
-        psql -U postgres -c "CREATE EXTENSION vector;"
-        psql -U postgres -c "SELECT vector_version();"
+        psql -d postgres -c 'CREATE EXTENSION vector;'
+        psql -d postgres -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -d postgres -c 'INSERT INTO items (embedding) VALUES ('\''[1,2,3]'\'');'
+        psql -d postgres -c 'SELECT * FROM items;'
