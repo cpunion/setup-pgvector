@@ -8,12 +8,23 @@ PGUSER=${3:-postgres}
 PGPASSWORD=${4:-postgres}
 PGDATABASE=${5:-postgres}
 
+# Function to export variables
+export_var() {
+    local name=$1
+    local value=$2
+    export "$name=$value"
+    # Only export to GITHUB_ENV if running in GitHub Actions
+    if [ -n "$GITHUB_ENV" ]; then
+        echo "$name=$value" >> $GITHUB_ENV
+    fi
+}
+
 # Set environment variables
-export PGDATA=/c/data/postgres
-export PGHOST=localhost
-export PGUSER=$PGUSER
-export PGPASSWORD=$PGPASSWORD
-export PGDATABASE=$PGDATABASE
+export_var "PGDATA" "/c/data/postgres"
+export_var "PGHOST" "localhost"
+export_var "PGUSER" "$PGUSER"
+export_var "PGPASSWORD" "$PGPASSWORD"
+export_var "PGDATABASE" "$PGDATABASE"
 
 # Initialize PostgreSQL if not already initialized
 if [ ! -d "$PGDATA" ]; then
@@ -60,11 +71,13 @@ if [ "$PGDATABASE" != "postgres" ]; then
     PGPASSWORD=$PGPASSWORD createdb -h localhost -U $PGUSER $PGDATABASE || true
 fi
 
-# Install build tools and dependencies
-pacman -S --noconfirm \
-    mingw-w64-x86_64-gcc \
-    mingw-w64-x86_64-postgresql \
-    make
+# Install build tools and dependencies if running in MSYS2
+if command -v pacman &> /dev/null; then
+    pacman -S --noconfirm \
+        mingw-w64-x86_64-gcc \
+        mingw-w64-x86_64-postgresql \
+        make
+fi
 
 # Add PostgreSQL binaries to PATH
 export PATH="/mingw64/bin:$PATH"
@@ -83,13 +96,6 @@ rm -rf pgvector
 echo "Creating pgvector extension..."
 PGPASSWORD=$PGPASSWORD psql -h localhost -U $PGUSER -d $PGDATABASE -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
-# Export environment variables for PowerShell
-echo "PGDATA=$PGDATA" >> $GITHUB_ENV
-echo "PGHOST=$PGHOST" >> $GITHUB_ENV
-echo "PGUSER=$PGUSER" >> $GITHUB_ENV
-echo "PGPASSWORD=$PGPASSWORD" >> $GITHUB_ENV
-echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
-
 # Verify installation
 echo "Checking PostgreSQL installation..."
 PGPASSWORD=$PGPASSWORD psql -h localhost -U $PGUSER -d $PGDATABASE -c "SELECT version();"
@@ -97,3 +103,12 @@ echo "Checking available extensions..."
 PGPASSWORD=$PGPASSWORD psql -h localhost -U $PGUSER -d $PGDATABASE -c "SELECT * FROM pg_available_extensions WHERE name = 'vector';"
 echo "Checking installed extensions..."
 PGPASSWORD=$PGPASSWORD psql -h localhost -U $PGUSER -d $PGDATABASE -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
+
+# Print success message
+echo "PostgreSQL and pgvector have been successfully installed!"
+echo "Connection details:"
+echo "  Host: localhost"
+echo "  User: $PGUSER"
+echo "  Database: $PGDATABASE"
+echo "  Password: [hidden]"
+echo "  Data directory: $PGDATA"
