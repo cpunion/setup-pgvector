@@ -10,10 +10,19 @@ PGDATABASE=${5:-postgres}
 
 # Install PostgreSQL
 brew install "postgresql@$PG_VERSION"
-brew services start "postgresql@$PG_VERSION"
+brew link --force "postgresql@$PG_VERSION"
 
 # Add PostgreSQL binaries to PATH
-export PATH="/opt/homebrew/opt/postgresql@$PG_VERSION/bin:$PATH"
+PG_PATH="/usr/local/opt/postgresql@$PG_VERSION/bin"
+# For Apple Silicon Macs
+if [ -d "/opt/homebrew/opt/postgresql@$PG_VERSION/bin" ]; then
+    PG_PATH="/opt/homebrew/opt/postgresql@$PG_VERSION/bin"
+fi
+export PATH="$PG_PATH:$PATH"
+echo "$PG_PATH" >> $GITHUB_PATH
+
+# Start PostgreSQL
+brew services start "postgresql@$PG_VERSION"
 
 # Wait for PostgreSQL to start
 sleep 3
