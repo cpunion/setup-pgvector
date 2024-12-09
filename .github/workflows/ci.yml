@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04, windows-latest, windows-2019, macos-latest, macos-13]
+        include:
+          - os: ubuntu-latest
+            postgres-version: '17'
+          - os: ubuntu-24.04
+            postgres-version: '17'
+          - os: windows-latest
+            postgres-version: '17'
+          - os: windows-2019
+            postgres-version: '17'
+          - os: macos-latest
+            postgres-version: '17'
+          - os: macos-13
+            postgres-version: '17'
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup pgvector
+      uses: ./
+      with:
+        postgres-version: ${{ matrix.postgres-version }}
+    
+    - name: Start PostgreSQL (Ubuntu)
+      if: startsWith(matrix.os, 'ubuntu-')
+      run: |
+        sudo systemctl start postgresql.service
+        
+    - name: Start PostgreSQL (macOS)
+      if: startsWith(matrix.os, 'macos-')
+      run: |
+        brew services start postgresql@${{ matrix.postgres-version }}
+        
+    - name: Test Extension (Ubuntu)
+      if: startsWith(matrix.os, 'ubuntu-')
+      run: |
+        sudo -u postgres psql -c 'CREATE EXTENSION vector;'
+        sudo -u postgres psql -c 'SELECT vector_version();'
+        
+    - name: Test Extension (macOS)
+      if: startsWith(matrix.os, 'macos-')
+      run: |
+        psql postgres -c 'CREATE EXTENSION vector;'
+        psql postgres -c 'SELECT vector_version();'
+        
+    - name: Test Extension (Windows)
+      if: startsWith(matrix.os, 'windows-')
+      shell: cmd
+      run: |
+        psql -U postgres -c "CREATE EXTENSION vector;"
+        psql -U postgres -c "SELECT vector_version();"

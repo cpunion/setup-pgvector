@@ -1,0 +1,44 @@
+name: 'Setup pgvector'
+description: 'Setup pgvector extension for PostgreSQL'
+inputs:
+  postgres-version:
+    description: 'PostgreSQL version to use'
+    required: false
+    default: '17'
+runs:
+  using: "composite"
+  steps:
+    - name: Install pgvector on Ubuntu
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+        sudo apt-get install postgresql-${{ inputs.postgres-version }}-pgvector
+
+    - name: Install pgvector on macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install pgvector
+
+    - name: Install pgvector on Windows 2022
+      if: runner.os == 'Windows' && matrix.os != 'windows-2019'
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        cd %TEMP%
+        git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+        cd pgvector
+        nmake /NOLOGO /F Makefile.win
+        nmake /NOLOGO /F Makefile.win install
+
+    - name: Install pgvector on Windows 2019
+      if: runner.os == 'Windows' && matrix.os == 'windows-2019'
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        cd %TEMP%
+        git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+        cd pgvector
+        nmake /NOLOGO /F Makefile.win
+        nmake /NOLOGO /F Makefile.win install
