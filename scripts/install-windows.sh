@@ -4,14 +4,6 @@ set -ex
 PG_VERSION=$1
 PGVECTOR_VERSION=$2
 
-# Install PostgreSQL and build tools via MSYS2
-pacman -Syu --noconfirm
-pacman -S --noconfirm \
-    mingw-w64-x86_64-postgresql${PG_VERSION} \
-    mingw-w64-x86_64-gcc \
-    mingw-w64-x86_64-make \
-    git
-
 # Add PostgreSQL binaries to PATH
 MSYS2_PATH="/c/msys64/mingw64"
 echo "${MSYS2_PATH}/bin" >> $GITHUB_PATH

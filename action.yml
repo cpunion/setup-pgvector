@@ -26,9 +26,21 @@ runs:
         chmod +x ${{ github.action_path }}/scripts/install-macos.sh
         ${{ github.action_path }}/scripts/install-macos.sh ${{ inputs.postgres-version }}
 
+    - name: Setup MSYS2
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-postgresql
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-make
+          git
+
     - name: Install and Configure PostgreSQL on Windows
       if: runner.os == 'Windows'
-      shell: bash
+      shell: msys2 {0}
       run: |
         SCRIPT_PATH=$(echo "${{ github.action_path }}/scripts/install-windows.sh" | sed 's/\\/\//g')
         chmod +x "$SCRIPT_PATH"
