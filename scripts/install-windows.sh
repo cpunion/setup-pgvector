@@ -12,27 +12,74 @@ export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PGDATA=/c/data/postgres
 export PGHOST=localhost
 export PGUSER=postgres
+rm -rf $PGDATA
 mkdir -p $PGDATA
 
 echo "Initializing PostgreSQL database..."
 initdb -U postgres --encoding=UTF8 --locale=C --auth=trust
 
 # Configure PostgreSQL
-echo "host    all             all             127.0.0.1/32            trust" >> $PGDATA/pg_hba.conf
-echo "host    all             all             ::1/128                 trust" >> $PGDATA/pg_hba.conf
+cat > $PGDATA/pg_hba.conf << EOL
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all            all                                     trust
+host    all            all             127.0.0.1/32           trust
+host    all            all             ::1/128                trust
+EOL
 
 # Configure postgresql.conf
-echo "unix_socket_directories = '$PGDATA'" >> $PGDATA/postgresql.conf
-echo "listen_addresses = 'localhost'" >> $PGDATA/postgresql.conf
+cat > $PGDATA/postgresql.conf << EOL
+listen_addresses = 'localhost'
+port = 5432
+max_connections = 100
+shared_buffers = 128MB
+dynamic_shared_memory_type = windows
+max_wal_size = 1GB
+min_wal_size = 80MB
+log_destination = 'stderr'
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 10MB
+log_min_messages = warning
+log_min_error_statement = error
+log_min_duration_statement = 1000
+client_min_messages = notice
+log_connections = on
+log_disconnections = on
+log_duration = on
+log_line_prefix = '%m [%p] '
+log_timezone = 'UTC'
+datestyle = 'iso, mdy'
+timezone = 'UTC'
+lc_messages = 'C'
+lc_monetary = 'C'
+lc_numeric = 'C'
+lc_time = 'C'
+default_text_search_config = 'pg_catalog.english'
+EOL
+
+# Create log directory
+mkdir -p $PGDATA/log
 
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
-pg_ctl -D $PGDATA -l $PGDATA/logfile start
-sleep 3  # Wait for PostgreSQL to start
+pg_ctl -D $PGDATA -w start
+
+# Wait and check the log
+sleep 3
+echo "PostgreSQL log content:"
+cat $PGDATA/log/postgresql-*.log || true
 
 # Verify PostgreSQL is running
 echo "Verifying PostgreSQL connection..."
-psql -h localhost -U postgres -c "SELECT version();"
+for i in {1..5}; do
+    if psql -h localhost -U postgres -c "SELECT version();" 2>/dev/null; then
+        break
+    fi
+    echo "Waiting for PostgreSQL to start (attempt $i)..."
+    sleep 2
+done
 
 # Get PostgreSQL version
 PG_ACTUAL_VERSION=$(psql -h localhost -U postgres -t -c "SHOW server_version;" | xargs)
