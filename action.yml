@@ -28,16 +28,7 @@ runs:
 
     - name: Install and Configure PostgreSQL on Windows
       if: runner.os == 'Windows'
-      shell: pwsh
+      shell: bash
       run: |
-        ${{ github.action_path }}/scripts/install-windows.ps1 -PostgresVersion ${{ inputs.postgres-version }} -PgVectorVersion ${{ inputs.pgvector-version }}
-
-    - name: Install pgvector on Windows
-      if: runner.os == 'Windows'
-      shell: cmd
-      run: |
-        if "${{ matrix.os }}" == "windows-2019" (
-          ${{ github.action_path }}/scripts/install-pgvector-windows.bat ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }} 2019
-        ) else (
-          ${{ github.action_path }}/scripts/install-pgvector-windows.bat ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }} 2022
-        )
+        chmod +x ${{ github.action_path }}/scripts/install-windows.sh
+        ${{ github.action_path }}/scripts/install-windows.sh ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
