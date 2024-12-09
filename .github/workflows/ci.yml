@@ -12,20 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        postgres-version: [14, 15, 16, 17]
         os: [ubuntu-latest, ubuntu-24.04, windows-latest, windows-2019, macos-latest, macos-13]
-        include:
-          - os: ubuntu-latest
-            postgres-version: '17'
-          - os: ubuntu-24.04
-            postgres-version: '17'
-          - os: windows-latest
-            postgres-version: '17'
-          - os: windows-2019
-            postgres-version: '17'
-          - os: macos-latest
-            postgres-version: '17'
-          - os: macos-13
-            postgres-version: '17'
 
     runs-on: ${{ matrix.os }}
 
