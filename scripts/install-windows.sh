@@ -17,7 +17,12 @@ export PGDATABASE=$PGDATABASE
 
 # Initialize PostgreSQL if not already initialized
 if [ ! -d "$PGDATA" ]; then
-    initdb -D "$PGDATA" -U $PGUSER --pwfile=<(echo "$PGPASSWORD")
+    # Create a temporary password file
+    PWFILE=$(mktemp)
+    echo "$PGPASSWORD" > "$PWFILE"
+    
+    initdb -D "$PGDATA" -U $PGUSER --pwfile="$PWFILE"
+    rm -f "$PWFILE"
     
     # Configure PostgreSQL for password authentication
     echo "host    all             all             127.0.0.1/32            md5" >> "$PGDATA/pg_hba.conf"
@@ -40,11 +45,22 @@ if [ "$PGDATABASE" != "postgres" ]; then
     PGPASSWORD=$PGPASSWORD createdb -h localhost -U $PGUSER $PGDATABASE || true
 fi
 
+# Install build tools and dependencies
+pacman -S --noconfirm \
+    mingw-w64-x86_64-gcc \
+    mingw-w64-x86_64-postgresql \
+    make
+
+# Add PostgreSQL binaries to PATH
+export PATH="/mingw64/bin:$PATH"
+export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:$PKG_CONFIG_PATH"
+
 # Build and install pgvector
 git clone --branch "v$PGVECTOR_VERSION" https://github.com/pgvector/pgvector.git
 cd pgvector
-make
-make install
+make clean
+PG_CONFIG=/mingw64/bin/pg_config make
+PG_CONFIG=/mingw64/bin/pg_config make install
 cd ..
 rm -rf pgvector
 
