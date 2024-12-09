@@ -18,16 +18,31 @@ runs:
       run: |
         echo "Checking PostgreSQL installation..."
         ls -la /usr/share/postgresql/
-        pg_version=$(psql --version | awk '{print $3}' | cut -d. -f1)
-        echo "PostgreSQL version: $pg_version"
-        echo "Expected version: ${{ inputs.postgres-version }}"
         
+        # Get the actual PostgreSQL version
+        pg_version=$(psql --version | awk '{print $3}' | cut -d. -f1)
+        echo "Current PostgreSQL version: $pg_version"
+        echo "Target version: ${{ inputs.postgres-version }}"
+        
+        # Install PostgreSQL of the specified version
         sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
         sudo apt-get update
+        sudo apt-get install -y postgresql-${{ inputs.postgres-version }}
         
-        echo "Available PostgreSQL packages:"
-        apt-cache search postgresql | grep postgresql-[0-9]
+        # Stop PostgreSQL service to switch version
+        sudo systemctl stop postgresql
         
+        # Update alternatives to use the correct version
+        sudo update-alternatives --set postgresql /usr/lib/postgresql/${{ inputs.postgres-version }}/bin/postgres
+        
+        # Start PostgreSQL with the new version
+        sudo systemctl start postgresql
+        
+        # Verify the running version
+        pg_version=$(psql --version | awk '{print $3}' | cut -d. -f1)
+        echo "PostgreSQL version after update: $pg_version"
+        
+        echo "Installing pgvector..."
         sudo apt-get install -y postgresql-${{ inputs.postgres-version }}-pgvector
         # If package not available, build from source
         if [ $? -ne 0 ]; then
@@ -36,15 +51,18 @@ runs:
           git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
           cd pgvector
           make
-          sudo make install
+          sudo make install PG_CONFIG=/usr/lib/postgresql/${{ inputs.postgres-version }}/bin/pg_config
           cd ..
           rm -rf pgvector
         fi
         
         echo "Checking installed PostgreSQL extensions directory:"
-        ls -la /usr/share/postgresql/*/extension/
+        ls -la /usr/share/postgresql/${{ inputs.postgres-version }}/extension/
         echo "Checking pgvector installation:"
         find /usr -name "vector.control" 2>/dev/null
+        
+        # Restart PostgreSQL to ensure it picks up the new extension
+        sudo systemctl restart postgresql
 
     - name: Install pgvector on macOS
       if: runner.os == 'macOS'
