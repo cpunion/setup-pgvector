@@ -49,12 +49,19 @@ if [ "$PGDATABASE" != "postgres" ]; then
 fi
 
 # Build and install pgvector
-git clone --branch "v$PGVECTOR_VERSION" https://github.com/pgvector/pgvector.git
+echo "Building pgvector from source..."
+brew install git
+
+# Create and use temporary directory
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
+git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
-make
-make install
+make clean
+PG_CONFIG="$PG_PATH/pg_config" make
+sudo PG_CONFIG="$PG_PATH/pg_config" make install
 cd ..
-rm -rf pgvector
+rm -rf "$TEMP_DIR"
 
 # Create and configure pgvector extension
 psql -d $PGDATABASE -c 'CREATE EXTENSION IF NOT EXISTS vector;'
