@@ -5,6 +5,10 @@ inputs:
     description: 'PostgreSQL version to use'
     required: false
     default: '17'
+  pgvector-version:
+    description: 'pgvector version to install'
+    required: false
+    default: '0.8.0'
 runs:
   using: "composite"
   steps:
@@ -13,7 +17,18 @@ runs:
       shell: bash
       run: |
         sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-        sudo apt-get install postgresql-${{ inputs.postgres-version }}-pgvector
+        sudo apt-get update
+        sudo apt-get install -y postgresql-${{ inputs.postgres-version }}-pgvector
+        # If package not available, build from source
+        if [ $? -ne 0 ]; then
+          sudo apt-get install -y postgresql-server-dev-${{ inputs.postgres-version }} build-essential git
+          git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
+          cd pgvector
+          make
+          sudo make install
+          cd ..
+          rm -rf pgvector
+        fi
 
     - name: Install pgvector on macOS
       if: runner.os == 'macOS'
@@ -27,7 +42,7 @@ runs:
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         cd %TEMP%
-        git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+        git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
         cd pgvector
         nmake /NOLOGO /F Makefile.win
         nmake /NOLOGO /F Makefile.win install
@@ -38,7 +53,7 @@ runs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         cd %TEMP%
-        git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+        git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
         cd pgvector
         nmake /NOLOGO /F Makefile.win
         nmake /NOLOGO /F Makefile.win install

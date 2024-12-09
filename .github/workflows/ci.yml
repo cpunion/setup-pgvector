@@ -65,8 +65,12 @@ jobs:
       if: startsWith(matrix.os, 'macos-')
       run: |
         createdb $USER
-        psql postgres -c 'CREATE EXTENSION vector;'
-        psql postgres -c 'SELECT vector_version();'
+        psql $USER -c 'CREATE EXTENSION vector;'
+        psql $USER -c '\dx'
+        psql $USER -c 'SELECT * FROM pg_available_extensions WHERE name = '\''vector'\'';'
+        psql $USER -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql $USER -c 'INSERT INTO items (embedding) VALUES ('\''[1,2,3]'\'');'
+        psql $USER -c 'SELECT * FROM items;'
         
     - name: Test Extension (Windows)
       if: startsWith(matrix.os, 'windows-')
