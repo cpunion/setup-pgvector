@@ -28,18 +28,38 @@ jobs:
             postgres-version: '17'
 
     runs-on: ${{ matrix.os }}
-
+    
     steps:
     - uses: actions/checkout@v4
-
+    
     - name: Setup pgvector
       uses: ./
       with:
         postgres-version: ${{ matrix.postgres-version }}
-
-    - name: Test Extension
+        
+    - name: Test Extension (Unix)
+      if: runner.os != 'Windows'
       run: |
-        psql -d postgres -c 'CREATE EXTENSION vector;'
-        psql -d postgres -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
-        psql -d postgres -c 'INSERT INTO items (embedding) VALUES ('\''[1,2,3]'\'');'
+        psql -d postgres -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -d postgres -c 'CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -d postgres -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
         psql -d postgres -c 'SELECT * FROM items;'
+
+    - name: Setup Test Data (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        psql -d postgres -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -d postgres -c 'CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -d postgres -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
+        psql -d postgres -c 'SELECT * FROM items;'
+
+    - name: Test Query (Windows CMD)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: psql -d postgres -c "SELECT * FROM items;"
+
+    - name: Test Query (Windows MSYS2)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: psql -d postgres -c 'SELECT * FROM items;'
