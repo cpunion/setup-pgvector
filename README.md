@@ -11,6 +11,19 @@ GitHub Action and scripts to set up PostgreSQL with pgvector extension for vecto
 - 🌐 Cross-platform support: Ubuntu, Windows (MSYS2), and macOS
 - 🏗️ Builds pgvector from source for maximum compatibility
 
+## Supported Platforms
+
+The following table shows the compatibility matrix for different PostgreSQL versions and platforms:
+
+| Platform | Architecture | PostgreSQL 14 | PostgreSQL 15 | PostgreSQL 16 | PostgreSQL 17 |
+|----------|-------------|:-------------:|:-------------:|:-------------:|:-------------:|
+| Ubuntu Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Ubuntu 24.04 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Windows Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Windows 2019 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| macOS Latest | arm64 | ✅ | ✅ | ✅ | ✅ |
+| macOS 13 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+
 ## Quick Start
 
 ### GitHub Actions
@@ -123,12 +136,6 @@ psql -h localhost -U myuser -d mydb
 # Or using password prompt
 psql -h localhost -U myuser -d mydb
 ```
-
-## Supported Platforms
-
-- Ubuntu (latest, 24.04)
-- Windows (latest, 2019)
-- macOS (latest, 13)
 
 ## Notes
 
