@@ -27,6 +27,17 @@ if [ ! -d "$PGDATA" ]; then
     # Configure PostgreSQL for password authentication
     echo "host    all             all             127.0.0.1/32            md5" >> "$PGDATA/pg_hba.conf"
     echo "host    all             all             ::1/128                 md5" >> "$PGDATA/pg_hba.conf"
+
+    # Configure logging
+    cat >> "$PGDATA/postgresql.conf" << EOL
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%Y-%m-%d.log'
+log_rotation_age = 1d
+EOL
+
+    # Create log directory
+    mkdir -p "$PGDATA/log"
 fi
 
 # Start PostgreSQL
@@ -38,7 +49,11 @@ sleep 3
 
 # Show PostgreSQL logs
 echo "PostgreSQL log content:"
-cat "$PGDATA/log/postgresql-"*".log"
+if [ -f "$PGDATA/log/postgresql-$(date +%Y-%m-%d).log" ]; then
+    cat "$PGDATA/log/postgresql-$(date +%Y-%m-%d).log"
+else
+    echo "Log file not found. PostgreSQL is still running, continuing..."
+fi
 
 # Create database if it doesn't exist
 if [ "$PGDATABASE" != "postgres" ]; then
