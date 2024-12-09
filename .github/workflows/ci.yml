@@ -56,6 +56,9 @@ jobs:
       env:
         PGPASSWORD: testpass
       run: |
+        psql -h localhost -U testuser -d testdb -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -h localhost -U testuser -d testdb -c 'CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -h localhost -U testuser -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
         psql -h localhost -U testuser -d testdb -c 'SELECT * FROM items;'
 
     - name: Test Extension (Windows CMD)
