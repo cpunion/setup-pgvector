@@ -9,6 +9,18 @@ inputs:
     description: 'pgvector version to install'
     required: false
     default: '0.8.0'
+  postgres-user:
+    description: 'PostgreSQL user to create'
+    required: false
+    default: 'postgres'
+  postgres-password:
+    description: 'PostgreSQL user password'
+    required: false
+    default: 'postgres'
+  postgres-db:
+    description: 'PostgreSQL database to create'
+    required: false
+    default: 'postgres'
 runs:
   using: "composite"
   steps:
@@ -17,14 +29,24 @@ runs:
       shell: bash
       run: |
         chmod +x ${{ github.action_path }}/scripts/install-ubuntu.sh
-        ${{ github.action_path }}/scripts/install-ubuntu.sh ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
+        ${{ github.action_path }}/scripts/install-ubuntu.sh \
+          ${{ inputs.postgres-version }} \
+          ${{ inputs.pgvector-version }} \
+          ${{ inputs.postgres-user }} \
+          ${{ inputs.postgres-password }} \
+          ${{ inputs.postgres-db }}
 
     - name: Install and Configure PostgreSQL on macOS
       if: runner.os == 'macOS'
       shell: bash
       run: |
         chmod +x ${{ github.action_path }}/scripts/install-macos.sh
-        ${{ github.action_path }}/scripts/install-macos.sh ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
+        ${{ github.action_path }}/scripts/install-macos.sh \
+          ${{ inputs.postgres-version }} \
+          ${{ inputs.pgvector-version }} \
+          ${{ inputs.postgres-user }} \
+          ${{ inputs.postgres-password }} \
+          ${{ inputs.postgres-db }}
 
     - name: Setup MSYS2
       if: runner.os == 'Windows'
@@ -57,4 +79,9 @@ runs:
       run: |
         SCRIPT_PATH=$(echo "${{ github.action_path }}/scripts/install-windows.sh" | sed 's/\\/\//g')
         chmod +x "$SCRIPT_PATH"
-        "$SCRIPT_PATH" ${{ inputs.postgres-version }} ${{ inputs.pgvector-version }}
+        "$SCRIPT_PATH" \
+          ${{ inputs.postgres-version }} \
+          ${{ inputs.pgvector-version }} \
+          ${{ inputs.postgres-user }} \
+          ${{ inputs.postgres-password }} \
+          ${{ inputs.postgres-db }}

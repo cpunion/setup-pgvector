@@ -11,12 +11,18 @@ steps:
   with:
     postgres-version: '17' # optional, defaults to 17. Use 14 for ubuntu-22.04 and ubuntu-20.04
     pgvector-version: '0.8.0' # optional, defaults to 0.8.0
+    postgres-user: 'myuser' # optional, defaults to 'postgres'
+    postgres-password: 'mypassword' # optional, defaults to 'postgres'
+    postgres-db: 'mydb' # optional, defaults to 'postgres'
 ```
 
 ## Inputs
 
 - `postgres-version`: PostgreSQL version to use (default: '17'). Note: Use '14' for ubuntu-22.04 and ubuntu-20.04.
 - `pgvector-version`: pgvector version to install (default: '0.8.0')
+- `postgres-user`: PostgreSQL user to create (default: 'postgres')
+- `postgres-password`: PostgreSQL user password (default: 'postgres')
+- `postgres-db`: PostgreSQL database to create (default: 'postgres')
 
 ## Platform Support
 
@@ -50,9 +56,19 @@ jobs:
       with:
         postgres-version: '17' # Use '14' for ubuntu-22.04 and ubuntu-20.04
         pgvector-version: '0.8.0'
+        postgres-user: 'myuser'
+        postgres-password: 'mypassword'
+        postgres-db: 'mydb'
     - name: Create extension
       run: |
         sudo -u postgres psql -c 'CREATE EXTENSION vector;'
+    - name: Test Connection
+      env:
+        PGUSER: myuser
+        PGPASSWORD: mypassword
+        PGDATABASE: mydb
+      run: |
+        psql -c 'SELECT version();'
 ```
 
 ### macOS
@@ -70,9 +86,19 @@ jobs:
       uses: cpunion/setup-pgvector@v1
       with:
         pgvector-version: '0.8.0'
+        postgres-user: 'myuser'
+        postgres-password: 'mypassword'
+        postgres-db: 'mydb'
     - name: Create extension
       run: |
         psql postgres -c 'CREATE EXTENSION vector;'
+    - name: Test Connection
+      env:
+        PGUSER: myuser
+        PGPASSWORD: mypassword
+        PGDATABASE: mydb
+      run: |
+        psql -c 'SELECT version();'
 ```
 
 ### Windows
@@ -93,10 +119,20 @@ jobs:
       uses: cpunion/setup-pgvector@v1
       with:
         pgvector-version: '0.8.0'
+        postgres-user: 'myuser'
+        postgres-password: 'mypassword'
+        postgres-db: 'mydb'
     - name: Create extension
       shell: cmd
       run: |
         psql -U postgres -c "CREATE EXTENSION vector;"
+    - name: Test Connection
+      env:
+        PGUSER: myuser
+        PGPASSWORD: mypassword
+        PGDATABASE: mydb
+      run: |
+        psql -c "SELECT version();"
 ```
 
 ## License

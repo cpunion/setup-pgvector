@@ -1,8 +1,12 @@
 #!/bin/bash
 set -ex
 
-PG_VERSION=$1
-PGVECTOR_VERSION=$2
+# Default versions if not provided
+PG_VERSION=${1:-17}
+PGVECTOR_VERSION=${2:-0.8.0}
+PGUSER=${3:-postgres}
+PGPASSWORD=${4:-postgres}
+PGDATABASE=${5:-postgres}
 
 echo "Installing PostgreSQL ${PG_VERSION}..."
 sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
@@ -63,3 +67,35 @@ echo "PostgreSQL ${PG_MAJOR_VERSION} extension directory:"
 ls -la /usr/share/postgresql/${PG_MAJOR_VERSION}/extension/ || true
 echo "PostgreSQL ${PG_MAJOR_VERSION} lib directory:"
 ls -la /usr/lib/postgresql/${PG_MAJOR_VERSION}/lib/ || true
+
+# Set password and create database
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$PGPASSWORD';"
+if [ "$PGUSER" != "postgres" ]; then
+    sudo -u postgres createuser -s $PGUSER
+    sudo -u postgres psql -c "ALTER USER $PGUSER WITH PASSWORD '$PGPASSWORD';"
+fi
+if [ "$PGDATABASE" != "postgres" ]; then
+    sudo -u postgres createdb -O $PGUSER $PGDATABASE
+fi
+
+# Create and configure pgvector extension
+sudo -u postgres psql -d $PGDATABASE -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+# Export environment variables
+export PGHOST=localhost
+export PGUSER=$PGUSER
+export PGPASSWORD=$PGPASSWORD
+export PGDATABASE=$PGDATABASE
+
+echo "PGHOST=$PGHOST" >> $GITHUB_ENV
+echo "PGUSER=$PGUSER" >> $GITHUB_ENV
+echo "PGPASSWORD=$PGPASSWORD" >> $GITHUB_ENV
+echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
+
+# Verify installation
+echo "Checking PostgreSQL installation..."
+psql -d $PGDATABASE -c "SELECT version();"
+echo "Checking available extensions..."
+psql -d $PGDATABASE -c "SELECT * FROM pg_available_extensions WHERE name = 'vector';"
+echo "Checking installed extensions..."
+psql -d $PGDATABASE -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
