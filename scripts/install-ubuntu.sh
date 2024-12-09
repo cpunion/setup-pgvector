@@ -19,21 +19,6 @@ export_var() {
     fi
 }
 
-# Function to wait for PostgreSQL to be ready
-wait_for_postgres() {
-    echo "Waiting for PostgreSQL to start..."
-    for i in {1..30}; do
-        if sudo -u postgres psql -c '\l' >/dev/null 2>&1; then
-            echo "PostgreSQL is ready!"
-            return 0
-        fi
-        echo "Waiting... ($i/30)"
-        sleep 1
-    done
-    echo "PostgreSQL failed to start"
-    return 1
-}
-
 # Add PostgreSQL repository
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
@@ -46,22 +31,13 @@ sudo apt-get install -y \
     build-essential \
     git
 
-# Ensure PostgreSQL service is properly configured and started
-sudo systemctl stop "postgresql@$PG_VERSION-main" || true
-sudo pg_dropcluster --stop "$PG_VERSION" main || true
-sudo pg_createcluster "$PG_VERSION" main --start || true
-sudo systemctl start "postgresql@$PG_VERSION-main"
-
-# Wait for PostgreSQL to be ready
-wait_for_postgres
-
 # Configure PostgreSQL authentication
 sudo sed -i 's/peer/trust/g' "/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 sudo sed -i 's/scram-sha-256/trust/g' "/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 sudo systemctl restart "postgresql@$PG_VERSION-main"
 
-# Wait again after authentication changes
-wait_for_postgres
+# Wait for PostgreSQL to start
+sleep 3
 
 # Create user and set password
 sudo -u postgres psql -c "CREATE USER $PGUSER WITH SUPERUSER PASSWORD '$PGPASSWORD';" || true
@@ -88,14 +64,6 @@ export_var "PGHOST" "localhost"
 export_var "PGUSER" "$PGUSER"
 export_var "PGPASSWORD" "$PGPASSWORD"
 export_var "PGDATABASE" "$PGDATABASE"
-
-# Verify installation
-echo "Checking PostgreSQL installation..."
-PGPASSWORD=$PGPASSWORD psql -h localhost -U "$PGUSER" -d "$PGDATABASE" -c "SELECT version();"
-echo "Checking available extensions..."
-PGPASSWORD=$PGPASSWORD psql -h localhost -U "$PGUSER" -d "$PGDATABASE" -c "SELECT * FROM pg_available_extensions WHERE name = 'vector';"
-echo "Checking installed extensions..."
-PGPASSWORD=$PGPASSWORD psql -h localhost -U "$PGUSER" -d "$PGDATABASE" -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
 
 # Print success message
 echo "PostgreSQL and pgvector have been successfully installed!"
