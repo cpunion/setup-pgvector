@@ -8,9 +8,7 @@ on:
 
 jobs:
   test:
-    continue-on-error: true
     strategy:
-      fail-fast: false
       matrix:
         postgres-version: [14, 15, 16, 17]
         os: [ubuntu-latest, ubuntu-24.04, windows-latest, windows-2019, macos-latest, macos-13]
