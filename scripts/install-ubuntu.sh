@@ -50,6 +50,8 @@ rm -rf pgvector
 echo "local all postgres trust" | sudo tee /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
 echo "local all runner trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
 echo "local all all trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
+echo "host all all 127.0.0.1/32 trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
+echo "host all all ::1/128 trust" | sudo tee -a /etc/postgresql/${PG_VERSION}/main/pg_hba.conf
 
 # Restart PostgreSQL to ensure pgvector is loaded
 sudo systemctl restart postgresql
