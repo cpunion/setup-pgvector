@@ -28,15 +28,15 @@ jobs:
             postgres-version: '17'
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup pgvector
       uses: ./
       with:
         postgres-version: ${{ matrix.postgres-version }}
-        
+
     - name: Test Extension
       run: |
         psql -d postgres -c 'CREATE EXTENSION vector;'

@@ -12,6 +12,8 @@ export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PGDATA=/c/data/postgres
 export PGHOST=localhost
 export PGUSER=postgres
+
+# Ensure data directory exists and is empty
 rm -rf $PGDATA
 mkdir -p $PGDATA
 
@@ -84,8 +86,6 @@ done
 # Get PostgreSQL version
 PG_ACTUAL_VERSION=$(psql -h localhost -U postgres -t -c "SHOW server_version;" | xargs)
 echo "PostgreSQL actual version: ${PG_ACTUAL_VERSION}"
-PG_MAJOR_VERSION=$(echo ${PG_ACTUAL_VERSION} | cut -d. -f1)
-echo "PostgreSQL major version: ${PG_MAJOR_VERSION}"
 
 # Build and install pgvector
 echo "Building pgvector..."
@@ -100,6 +100,11 @@ rm -rf pgvector
 # Create and configure pgvector extension
 echo "Creating pgvector extension..."
 psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+# Export environment variables for PowerShell
+echo "PGDATA=$PGDATA" >> $GITHUB_ENV
+echo "PGHOST=$PGHOST" >> $GITHUB_ENV
+echo "PGUSER=$PGUSER" >> $GITHUB_ENV
 
 # Verify installation
 echo "Checking PostgreSQL installation..."
