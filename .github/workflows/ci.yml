@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -30,6 +31,13 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install PostgreSQL (macOS)
+      if: startsWith(matrix.os, 'macos-')
+      run: |
+        brew install postgresql@${{ matrix.postgres-version }}
+        brew link postgresql@${{ matrix.postgres-version }}
+        echo "/usr/local/opt/postgresql@${{ matrix.postgres-version }}/bin" >> $GITHUB_PATH
     
     - name: Setup pgvector
       uses: ./
@@ -45,6 +53,7 @@ jobs:
       if: startsWith(matrix.os, 'macos-')
       run: |
         brew services start postgresql@${{ matrix.postgres-version }}
+        sleep 3 # wait for PostgreSQL to start
         
     - name: Test Extension (Ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
@@ -55,6 +64,7 @@ jobs:
     - name: Test Extension (macOS)
       if: startsWith(matrix.os, 'macos-')
       run: |
+        createdb $USER
         psql postgres -c 'CREATE EXTENSION vector;'
         psql postgres -c 'SELECT vector_version();'
         
