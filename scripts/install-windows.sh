@@ -97,12 +97,14 @@ PG_CONFIG=/mingw64/bin/pg_config make install
 cd ..
 rm -rf pgvector
 
-# Create test database
-echo "Creating test database..."
-createdb -h localhost -U postgres postgres
+# Create and configure pgvector extension
+echo "Creating pgvector extension..."
+psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Verify installation
 echo "Checking PostgreSQL installation..."
 psql -h localhost -U postgres -d postgres -c "SELECT version();"
 echo "Checking available extensions..."
 psql -h localhost -U postgres -d postgres -c "SELECT * FROM pg_available_extensions WHERE name = 'vector';"
+echo "Checking installed extensions..."
+psql -h localhost -U postgres -d postgres -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
