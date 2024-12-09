@@ -16,11 +16,22 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       run: |
+        echo "Checking PostgreSQL installation..."
+        ls -la /usr/share/postgresql/
+        pg_version=$(psql --version | awk '{print $3}' | cut -d. -f1)
+        echo "PostgreSQL version: $pg_version"
+        echo "Expected version: ${{ inputs.postgres-version }}"
+        
         sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
         sudo apt-get update
+        
+        echo "Available PostgreSQL packages:"
+        apt-cache search postgresql | grep postgresql-[0-9]
+        
         sudo apt-get install -y postgresql-${{ inputs.postgres-version }}-pgvector
         # If package not available, build from source
         if [ $? -ne 0 ]; then
+          echo "Package postgresql-${{ inputs.postgres-version }}-pgvector not available, building from source..."
           sudo apt-get install -y postgresql-server-dev-${{ inputs.postgres-version }} build-essential git
           git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
           cd pgvector
@@ -29,12 +40,27 @@ runs:
           cd ..
           rm -rf pgvector
         fi
+        
+        echo "Checking installed PostgreSQL extensions directory:"
+        ls -la /usr/share/postgresql/*/extension/
+        echo "Checking pgvector installation:"
+        find /usr -name "vector.control" 2>/dev/null
 
     - name: Install pgvector on macOS
       if: runner.os == 'macOS'
       shell: bash
       run: |
         brew install pgvector
+
+    - name: Install PostgreSQL on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install postgresql${{ inputs.postgres-version }} --params '/Password:postgres'
+        $pgPath = "C:\Program Files\PostgreSQL\${{ inputs.postgres-version }}"
+        echo "$pgPath\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "$pgPath\lib" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        refreshenv
 
     - name: Install pgvector on Windows 2022
       if: runner.os == 'Windows' && matrix.os != 'windows-2019'
@@ -44,6 +70,7 @@ runs:
         cd %TEMP%
         git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
         cd pgvector
+        set PATH=C:\Program Files\PostgreSQL\${{ inputs.postgres-version }}\bin;C:\Program Files\PostgreSQL\${{ inputs.postgres-version }}\lib;%PATH%
         nmake /NOLOGO /F Makefile.win
         nmake /NOLOGO /F Makefile.win install
 
@@ -55,5 +82,13 @@ runs:
         cd %TEMP%
         git clone --branch v${{ inputs.pgvector-version }} https://github.com/pgvector/pgvector.git
         cd pgvector
+        set PATH=C:\Program Files\PostgreSQL\${{ inputs.postgres-version }}\bin;C:\Program Files\PostgreSQL\${{ inputs.postgres-version }}\lib;%PATH%
         nmake /NOLOGO /F Makefile.win
         nmake /NOLOGO /F Makefile.win install
+
+    - name: Start PostgreSQL Service on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Start-Service postgresql-x64-${{ inputs.postgres-version }}
+        Start-Sleep -s 3  # Wait for PostgreSQL to start
