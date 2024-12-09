@@ -31,13 +31,23 @@ sudo apt-get install -y \
     build-essential \
     git
 
+# Ensure PostgreSQL is started
+sudo systemctl enable "postgresql@$PG_VERSION-main"
+sudo systemctl start "postgresql@$PG_VERSION-main"
+
 # Configure PostgreSQL authentication
 sudo sed -i 's/peer/trust/g' "/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 sudo sed -i 's/scram-sha-256/trust/g' "/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 sudo systemctl restart "postgresql@$PG_VERSION-main"
 
 # Wait for PostgreSQL to start
-sleep 3
+for i in {1..10}; do
+    if sudo -u postgres psql -c '\l' >/dev/null 2>&1; then
+        break
+    fi
+    echo "Waiting for PostgreSQL to start... ($i/10)"
+    sleep 1
+done
 
 # Create user and set password
 sudo -u postgres psql -c "CREATE USER $PGUSER WITH SUPERUSER PASSWORD '$PGPASSWORD';" || true
