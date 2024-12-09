@@ -54,13 +54,14 @@ brew install git
 
 # Create and use temporary directory
 TEMP_DIR=$(mktemp -d)
+ORIG_DIR=$(pwd)
 cd "$TEMP_DIR"
 git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
 make clean
 PG_CONFIG="$PG_PATH/pg_config" make
 sudo PG_CONFIG="$PG_PATH/pg_config" make install
-cd ..
+cd "$ORIG_DIR"
 rm -rf "$TEMP_DIR"
 
 # Create and configure pgvector extension

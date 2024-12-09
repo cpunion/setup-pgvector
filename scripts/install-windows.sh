@@ -89,13 +89,14 @@ pacman -S --noconfirm git make gcc
 
 # Create and use temporary directory
 TEMP_DIR=$(mktemp -d)
+ORIG_DIR=$(pwd)
 cd "$TEMP_DIR"
 git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
 make clean
 PATH=$PATH:/mingw64/bin make USE_PGXS=1
 PATH=$PATH:/mingw64/bin make USE_PGXS=1 install
-cd ..
+cd "$ORIG_DIR"
 rm -rf "$TEMP_DIR"
 
 # Create extension

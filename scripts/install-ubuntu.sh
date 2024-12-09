@@ -41,13 +41,14 @@ sudo apt-get install -y postgresql-server-dev-${PG_MAJOR_VERSION} build-essentia
 
 # Create and use temporary directory
 TEMP_DIR=$(mktemp -d)
+ORIG_DIR=$(pwd)
 cd "$TEMP_DIR"
 git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
 make clean
 PG_CONFIG=/usr/lib/postgresql/${PG_MAJOR_VERSION}/bin/pg_config make
 sudo PG_CONFIG=/usr/lib/postgresql/${PG_MAJOR_VERSION}/bin/pg_config make install
-cd ..
+cd "$ORIG_DIR"
 rm -rf "$TEMP_DIR"
 
 # Configure PostgreSQL authentication for CI
