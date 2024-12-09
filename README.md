@@ -1,96 +1,148 @@
-# Setup pgvector Action
+# Setup pgvector
 
-This action sets up [pgvector](https://github.com/pgvector/pgvector) in your GitHub Actions workflow. It uses the preinstalled PostgreSQL on GitHub runners and installs pgvector using platform-specific methods.
+GitHub Action and scripts to set up PostgreSQL with pgvector extension for vector similarity search.
 
-## Usage
+## Features
+
+- 🚀 Quick setup of PostgreSQL with pgvector extension
+- 🔄 Supports both GitHub Actions and local installation
+- 🛠️ Customizable PostgreSQL and pgvector versions
+- 🔐 Secure password authentication
+- 🌐 Cross-platform support: Ubuntu, Windows (MSYS2), and macOS
+- 🏗️ Builds pgvector from source for maximum compatibility
+
+## Supported Platforms
+
+The following table shows the compatibility matrix for different PostgreSQL versions and platforms:
+
+| Platform | Architecture | PostgreSQL 14 | PostgreSQL 15 | PostgreSQL 16 | PostgreSQL 17 |
+|----------|-------------|:-------------:|:-------------:|:-------------:|:-------------:|
+| Ubuntu Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Ubuntu 24.04 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Windows Latest | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| Windows 2019 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+| macOS Latest | arm64 | ✅ | ✅ | ✅ | ✅ |
+| macOS 13 | x86_64 | ✅ | ✅ | ✅ | ✅ |
+
+## Quick Start
+
+### GitHub Actions
 
 ```yaml
 steps:
-- uses: actions/checkout@v4
-- uses: cpunion/setup-pgvector@v1
+- uses: cpunion/setup-pgvector@main
   with:
-    postgres-version: '17' # optional, defaults to 17. Use 14 for ubuntu-22.04 and ubuntu-20.04
+    postgres-version: '17'
+    postgres-user: 'myuser'
+    postgres-password: 'mypassword'
+    postgres-db: 'mydb'
+
+- name: Test pgvector
+  env:
+    PGPASSWORD: mypassword
+  run: |
+    psql -h localhost -U myuser -d mydb -c 'CREATE EXTENSION vector;'
 ```
 
-## Inputs
+### Local Installation
 
-- `postgres-version`: PostgreSQL version to use (default: '17'). Note: Use '14' for ubuntu-22.04 and ubuntu-20.04.
+#### Method 1: Direct Installation
 
-## Platform Support
+```bash
+# Ubuntu
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-ubuntu.sh | bash
 
-This action supports all major GitHub Actions platforms:
-- Ubuntu (using postgresql-xx-pgvector package)
-- macOS (using Homebrew)
-- Windows (building from source using Visual Studio Build Tools)
+# macOS
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-macos.sh | bash
 
-## CI Status
+# Windows (MSYS2)
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-windows.sh | bash
+```
 
-The action is tested on the following platforms:
-- Ubuntu: ubuntu-latest, ubuntu-24.04
-- Windows: windows-latest, windows-2019
-- macOS: macos-latest, macos-13
+With custom parameters:
+```bash
+# Format: curl ... | bash -s [PG_VERSION] [PGVECTOR_VERSION] [PGUSER] [PGPASSWORD] [PGDATABASE]
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-ubuntu.sh | bash -s 17 0.8.0 myuser mypassword mydb
+```
 
-## Example workflows
+#### Method 2: Clone and Run
 
-### Ubuntu
+```bash
+# Ubuntu
+./scripts/install-ubuntu.sh
+
+# macOS
+./scripts/install-macos.sh
+
+# Windows (MSYS2)
+./scripts/install-windows.sh
+```
+
+## Requirements
+
+- Ubuntu: No additional requirements
+- Windows: MSYS2 environment
+- macOS: Homebrew
+- Git (for building pgvector)
+
+## Detailed Usage
+
+### GitHub Actions
+
 ```yaml
-name: Test Ubuntu
+steps:
+- uses: cpunion/setup-pgvector@main
+  with:
+    # PostgreSQL version to install (default: 17)
+    postgres-version: '17'
+    # pgvector version to install (default: 0.8.0)
+    pgvector-version: '0.8.0'
+    # PostgreSQL user to create (default: postgres)
+    postgres-user: 'myuser'
+    # Password for the PostgreSQL user (default: postgres)
+    postgres-password: 'mypassword'
+    # Database to create (default: postgres)
+    postgres-db: 'mydb'
 
-on: [push]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest # or ubuntu-22.04, ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup pgvector
-      uses: cpunion/setup-pgvector@v1
-      with:
-        postgres-version: '17' # Use '14' for ubuntu-22.04 and ubuntu-20.04
-    - name: Create extension
-      run: |
-        sudo -u postgres psql -c 'CREATE EXTENSION vector;'
+- name: Test pgvector
+  env:
+    PGPASSWORD: mypassword
+  run: |
+    psql -h localhost -U myuser -d mydb -c 'CREATE EXTENSION vector;'
+    psql -h localhost -U myuser -d mydb -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
+    psql -h localhost -U myuser -d mydb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
+    psql -h localhost -U myuser -d mydb -c 'SELECT * FROM items;'
 ```
 
-### macOS
-```yaml
-name: Test macOS
+### Script Parameters
 
-on: [push]
+All installation scripts accept the following parameters:
 
-jobs:
-  test:
-    runs-on: macos-latest # or macos-13
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup pgvector
-      uses: cpunion/setup-pgvector@v1
-    - name: Create extension
-      run: |
-        psql postgres -c 'CREATE EXTENSION vector;'
+1. `PG_VERSION` (default: 17) - PostgreSQL version to install
+2. `PGVECTOR_VERSION` (default: 0.8.0) - pgvector version to install
+3. `PGUSER` (default: postgres) - PostgreSQL user to create
+4. `PGPASSWORD` (default: postgres) - Password for the PostgreSQL user
+5. `PGDATABASE` (default: postgres) - Database to create
+
+### Connection Details
+
+After installation, you can connect to PostgreSQL using:
+
+```bash
+# Using password from environment variable
+export PGPASSWORD=mypassword
+psql -h localhost -U myuser -d mydb
+
+# Or using password prompt
+psql -h localhost -U myuser -d mydb
 ```
 
-### Windows
-```yaml
-name: Test Windows
+## Notes
 
-on: [push]
-
-jobs:
-  test:
-    strategy:
-      matrix:
-        os: [windows-latest, windows-2019]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup pgvector
-      uses: cpunion/setup-pgvector@v1
-    - name: Create extension
-      shell: cmd
-      run: |
-        psql -U postgres -c "CREATE EXTENSION vector;"
-```
+- The scripts will install PostgreSQL if not already installed
+- The scripts will create the specified user and database if they don't exist
+- The scripts will build and install pgvector from source
+- All connections are configured to use password authentication
 
 ## License
 

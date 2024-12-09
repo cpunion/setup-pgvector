@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres-version: [14, 15, 16, 17]
+        os: [ubuntu-latest, ubuntu-24.04, windows-latest, windows-2019, macos-latest, macos-13]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup pgvector
+      uses: ./
+      with:
+        postgres-version: ${{ matrix.postgres-version }}
+        postgres-user: testuser
+        postgres-password: testpass
+        postgres-db: testdb
+
+    - name: Test Extension (Unix)
+      if: runner.os != 'Windows'
+      env:
+        PGPASSWORD: testpass
+      run: |
+        psql -h localhost -U testuser -d testdb -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -h localhost -U testuser -d testdb -c 'CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -h localhost -U testuser -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
+        psql -h localhost -U testuser -d testdb -c 'SELECT * FROM items;'
+
+    - name: Test Extension (Windows PowerShell)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        PGPASSWORD: testpass
+      run: |
+        psql -h localhost -U testuser -d testdb -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -h localhost -U testuser -d testdb -c 'CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));'
+        psql -h localhost -U testuser -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
+        psql -h localhost -U testuser -d testdb -c 'SELECT * FROM items;'
+
+    - name: Test Extension (Windows CMD)
+      if: runner.os == 'Windows'
+      shell: cmd
+      env:
+        PGPASSWORD: testpass
+      run: psql -h localhost -U testuser -d testdb -c "SELECT * FROM items;"
+
+    - name: Test Extension (Windows MSYS2)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      env:
+        PGPASSWORD: testpass
+      run: psql -h localhost -U testuser -d testdb -c 'SELECT * FROM items;'
