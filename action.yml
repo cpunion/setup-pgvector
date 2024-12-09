@@ -36,11 +36,17 @@ runs:
           mingw-w64-x86_64-postgresql
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-make
+          mingw-w64-x86_64-tools-git
+          make
+          diffutils
           git
 
     - name: Install and Configure PostgreSQL on Windows
       if: runner.os == 'Windows'
       shell: msys2 {0}
+      env:
+        MSYSTEM: MINGW64
+        CHERE_INVOKING: 1
       run: |
         SCRIPT_PATH=$(echo "${{ github.action_path }}/scripts/install-windows.sh" | sed 's/\\/\//g')
         chmod +x "$SCRIPT_PATH"

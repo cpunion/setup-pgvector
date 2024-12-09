@@ -5,9 +5,8 @@ PG_VERSION=$1
 PGVECTOR_VERSION=$2
 
 # Add PostgreSQL binaries to PATH
-MSYS2_PATH="/c/msys64/mingw64"
-echo "${MSYS2_PATH}/bin" >> $GITHUB_PATH
-echo "${MSYS2_PATH}/lib" >> $GITHUB_PATH
+export PATH="/mingw64/bin:$PATH"
+export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 # Initialize PostgreSQL database
 export PGDATA=/c/msys64/home/$USER/pgdata
@@ -32,8 +31,8 @@ echo "PostgreSQL major version: ${PG_MAJOR_VERSION}"
 git clone --branch v${PGVECTOR_VERSION} https://github.com/pgvector/pgvector.git
 cd pgvector
 make clean
-PATH="${MSYS2_PATH}/bin:$PATH" PG_CONFIG="${MSYS2_PATH}/bin/pg_config" make
-PATH="${MSYS2_PATH}/bin:$PATH" PG_CONFIG="${MSYS2_PATH}/bin/pg_config" make install
+PG_CONFIG=/mingw64/bin/pg_config make
+PG_CONFIG=/mingw64/bin/pg_config make install
 cd ..
 rm -rf pgvector
 
