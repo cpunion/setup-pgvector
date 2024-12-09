@@ -33,6 +33,27 @@ steps:
 
 ### Local Installation
 
+#### Method 1: Direct Installation
+
+```bash
+# Ubuntu
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-ubuntu.sh | bash
+
+# macOS
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-macos.sh | bash
+
+# Windows (MSYS2)
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-windows.sh | bash
+```
+
+With custom parameters:
+```bash
+# Format: curl ... | bash -s [PG_VERSION] [PGVECTOR_VERSION] [PGUSER] [PGPASSWORD] [PGDATABASE]
+curl -fsSL https://raw.githubusercontent.com/cpunion/setup-pgvector/main/scripts/install-ubuntu.sh | bash -s 17 0.8.0 myuser mypassword mydb
+```
+
+#### Method 2: Clone and Run
+
 ```bash
 # Ubuntu
 ./scripts/install-ubuntu.sh
@@ -78,37 +99,6 @@ steps:
     psql -h localhost -U myuser -d mydb -c 'CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));'
     psql -h localhost -U myuser -d mydb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]');"
     psql -h localhost -U myuser -d mydb -c 'SELECT * FROM items;'
-```
-
-### Local Installation
-
-The scripts can also be used locally on Ubuntu, macOS, and Windows (MSYS2).
-
-#### Ubuntu
-```bash
-# Install with default settings
-./scripts/install-ubuntu.sh
-
-# Install with custom settings
-./scripts/install-ubuntu.sh 17 0.8.0 myuser mypassword mydb
-```
-
-#### macOS
-```bash
-# Install with default settings
-./scripts/install-macos.sh
-
-# Install with custom settings
-./scripts/install-macos.sh 17 0.8.0 myuser mypassword mydb
-```
-
-#### Windows (MSYS2)
-```bash
-# Install with default settings
-./scripts/install-windows.sh
-
-# Install with custom settings
-./scripts/install-windows.sh 17 0.8.0 myuser mypassword mydb
 ```
 
 ### Script Parameters
